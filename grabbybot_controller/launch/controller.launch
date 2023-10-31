@@ -1,0 +1,24 @@
+<launch>
+
+    <arg name="is_sim" default="false" />
+    <arg name="model" default="$(find grabbybot_description)/urdf/grabbybot.urdf.xacro"/>
+
+    <rosparam file="$(find grabbybot_controller)/config/trajectory_controllers.yaml" command="load" />
+    <rosparam file="$(find grabbybot_controller)/config/joint_state_controller.yaml" command="load" />
+
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
+    
+    <!-- Only executed for real robot -->
+    <group unless="$(arg is_sim)">
+        <node pkg="grabbybot_controller" type="angles_converter.py" name="angles_converter" respawn="true" output="screen" />
+        <node pkg="grabbybot_controller" type="grabbybot_interface_node" name="grabbybot_interface_node" respawn="true" output="screen" ns="grabbybot" />
+    </group>
+
+    <node pkg="controller_manager" type="spawner" name="controller_spawner" respawn="false" output="screen" ns="grabbybot" 
+        args="arm_controller gripper_controller joint_state_controller" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" >
+        <remap from="/joint_states" to="/grabbybot/joint_states" />
+    </node>
+      
+</launch>
